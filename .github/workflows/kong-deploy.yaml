@@ -35,6 +35,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           username: ec2-user
           script: |
             set -euo pipefail

@@ -10,4 +10,3 @@ services:
         paths:
           - /
         strip_path: true
-    
