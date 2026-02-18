@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Deck
         uses: kong/setup-deck@v1
@@ -27,16 +27,18 @@ jobs:
         run: |
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< "${{ secrets.EC2_SSH_KEY }}"
-          scp -o StrictHostKeyChecking=no kong.yaml ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/kong.yaml
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+          scp kong.yaml ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/kong.yaml
 
       - name: Move and Restart Kong on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
           script: |
-            mv /home/ec2-user/kong.yaml /etc/kong/kong.yaml
-            ls -al
-            sudo kong restart
+            set -euo pipefail
+            sudo mv /home/ec2-user/kong.yaml /etc/kong/kong.yaml
+            ls -al /etc/kong/
+            sudo kong restart -c /etc/kong/kong.conf.default
+          port: 22
